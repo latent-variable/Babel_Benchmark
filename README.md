@@ -13,6 +13,10 @@ This project highlights a critical point: **language is AI's natural habitat**. 
 
 ![Babel Benchmark](imgs/babel_bench.png)
 
+## Scores 
+
+![Babel Benchmark Scores](imgs/sorted_scores_chart.png)
+
 ## Methodology
 
 The Babel Benchmark uses a multi-step process to generate multilingual sentences and evaluate AI language models' performance in reconstructing the original English sentence. Here's how it works:
@@ -79,11 +83,11 @@ This benchmark is designed to challenge the assumption that human general intell
 
 ### Key Points:
 
-- **No human alive** can speak, read, and write fluently in hundreds of languages.
-- Even the most accomplished polyglots are **specialists**, knowing a handful of languages at best. In contrast, **AI is a generalist** in language, capable of understanding \*\*dozens\*\* of languages, dialects, and scripts.
-- The test highlights **AI’s ability to synthesize meaning across diverse linguistic inputs**, something that is **impossible for any human** to achieve without assistance.
+- **No human alive** can speak, read, and write fluently in hundreds of languages. The Guinness record holder Polyglot is [Ziad Fazah](https://en.wikipedia.org/wiki/Ziad_Fazah) with 58. 
+- Even the most accomplished polyglots are **specialists**, knowing a handful of languages at best. In contrast, **LLMs are the generalist** in language, potentially capable of understanding \*\*hundres\*\* of languages, dialects, and scripts.
+- The test highlights **LLM’s ability to synthesize meaning across diverse linguistic inputs**, something that seems **impossible for any human** to achieve without assistance.
 
-The Babel Test underscores that **text is AI’s native habitat**. Humans may argue that AI lacks physical-world understanding, but in the **realm of language**, **AI is unmatched**. This test makes that point in a way that is **impossible to dismiss**.
+The Babel Test underscores that **text is LLM’s native habitat**. Humans may argue that AI lacks physical-world understanding, but in the **realm of language**, **LLMs are unmatched**. This test makes that point in a way that is **impossible to dismiss**.
 
 ---
 

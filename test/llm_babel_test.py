@@ -5,6 +5,7 @@ import requests
 from datetime import datetime
 import warnings
 from bert_score import score
+from time import sleep
 
 
 # Suppress warnings
@@ -134,11 +135,16 @@ def get_openrouter_prediction(prompt):
         response.raise_for_status()
         result = response.json()
 
+        if "choices" not in result:
+            print('API issues... trying again', str(result)[:100])
+            sleep(10)
+            return get_openrouter_prediction(prompt)
+        
         # Extract sentences from the OpenRouter response
         response_text = result["choices"][0]["message"]["content"]
-        parse_answer(response_text)
+        answer = parse_answer(response_text)
         if answer == "":
-            print('Trying again!')
+            print('Invalid format... Trying again!')
             answer = get_openrouter_prediction(prompt)
         return answer
     except requests.exceptions.RequestException as e:
@@ -188,7 +194,8 @@ final_bert_score = total_bert_score / len(translations)
 print(f'Final BERTscores: {final_bert_score}' )
 
 # Write results to a CSV file
-with open(f"results/{MODEL}_results.csv", "w", newline="", encoding="utf-8") as csvfile:
+model_name_file = MODEL.replace('/','_')
+with open(f"results/{model_name_file}_results.csv", "w", newline="", encoding="utf-8") as csvfile:
     fieldnames = ["original_sentence", "multilingual_sentence", "predicted_sentence", "bert_score", "model_name"]
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
@@ -209,7 +216,7 @@ with open(final_score_file, "a", newline="", encoding="utf-8") as csvfile:
     # Append the final score
     writer.writerow({
         "datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "model_name": MODEL,
+        "model_name": model_name_file,
         "final_bert_score": round(final_bert_score, 2)
     })
 

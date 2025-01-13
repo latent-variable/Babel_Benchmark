@@ -1,8 +1,13 @@
 datetime,model_name,final_bert_score
 2025-01-11 23:33:00,llama3.2,57.43
 2025-01-11 23:37:22,phi4,75.49
-2025-01-11 23:42:17,gemma27b,81.32
 2025-01-11 23:47:21,qwen2.5-coder:32b,69.04
 2025-01-11 23:54:56,llama3.3,80.2
 2025-01-12 00:02:56,qwen2.5:72b,80.16
-2025-01-12 16:18:19,deepseek/deepseek-chat,82.95
+2025-01-12 16:18:19,deepseek_deepseek-chat,82.95
+2025-01-12 19:20:23,anthropic_claude-3.5-sonnet,86.25
+2025-01-12 19:32:16,openai_gpt-4o-mini,73.17
+2025-01-12 19:38:01,openai_gpt-4o-2024-11-20,82.75
+2025-01-12 19:52:00,google_gemma-2-27b-it,76.04
+2025-01-12 20:07:45,mistralai_mistral-large-2411,73.82
+2025-01-12 20:11:13,human,25.39

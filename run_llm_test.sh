@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # List of models to test
-models=("deepseek/deepseek-chat" "llama3.2" "phi4" "gemma27b-unlocked" "qwen2.5-coder:32b" "llama3.3" "qwen2.5:72b")
+models=(  "meta-llama/llama-3.1-405b-instruct" ) # "mistralai/mistral-large-2411" "google/gemma-2-27b-it" "openai/gpt-4o-mini" "openai/gpt-4o-2024-11-20" "anthropic/claude-3.5-sonnet" "deepseek/deepseek-chat" "llama3.2" "phi4" "gemma27b-unlocked" "qwen2.5-coder:32b" "llama3.3" "qwen2.5:72b")
 
 # Load the .env file if it exists
 if [ -f .env ]; then
@@ -28,8 +28,8 @@ fi
 # Loop through each model and run the test
 for model in "${models[@]}"; do
     export MODEL="$model"
-    echo "Running test_babel.py with model: $model..."
-    python3 test/test_babel.py
+    echo "Running test/llm_babel_test.py with model: $model..."
+    python3 test/llm_babel_test.py
 
     # Check if the test ran successfully
     if [ $? -eq 0 ]; then
