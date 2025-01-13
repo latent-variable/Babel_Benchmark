@@ -2,11 +2,16 @@
 
 ## Overview
 
+### Can you decipher the following: Der 迅速な коричневый 狐 skáče över собаку leniwy hund
+
 The **Babel Benchmark** is a benchmark designed to demonstrate the **superhuman multilingual capabilities** of AI language models compared to humans. It challenges participants to decipher sentences where **each word is written in a different language and native script**, showcasing the AI's ability to effortlessly navigate across dozens of languages and writing systems — a task no human can achieve.
 
 This project highlights a critical point: **language is AI's natural habitat**. While AI may struggle to interact with the physical world, it thrives in the domain of **text-based communication**. The Babel Test makes it undeniably clear that **AI has surpassed human capabilities in language comprehension**.
 
 ---
+## Babel Benchmark Diagram
+
+![Babel Benchmark](imgs/babel_bench.png)
 
 ## Methodology
 

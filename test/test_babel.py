@@ -1,56 +1,98 @@
-import json
+import os 
 import csv
+import json
 import requests
 from datetime import datetime
-import os
-from bert_score import score
 import warnings
+from bert_score import score
+
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
 
+
 # Load environment variables
-OLLAMA_URL = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+MODEL = os.getenv("MODEL", "llama3.2")
+OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
+USE_OLLAMA = os.getenv("USE_OLLAMA", "True").lower() in ("true", "1", "yes")
 
-PROMPT = """Given a multilingual sentence where each word is in a different language and native script, translate it back into English. Ensure that the output is a coherent English sentence that matches the original meaning.
 
-### Example 1:
+PROMPT = """Given a multilingual sentence where each word is in a different language and native script, translate it back into English. You are allowed to provide reasoning or explanations to arrive at your answer, but the final output must be formatted as a JSON object with the key 'answer'.
+
+Example Input:
+
 Der 迅速な коричневый 狐 skáče över собаку leniwy hund
 
-### Expected Output:
-The quick brown fox jumps over the lazy dog.
+Reasoning:
 
-### Example 2:
-El gato 快速的 черный chat прыгать su perro 
+'Der' is a German word meaning 'The'.
 
-### Expected Output:
-The fast black cat jumps over his dog.
+'迅速な' is a Japanese word meaning 'quick'.
 
-### Example 3:
-La maison 快速的 дом house находится près de леса
+'коричневый' is a Russian word meaning 'brown'.
+...
 
-### Expected Output:
-The house is near the forest.
+Final Output:
 
-### Important Instructions:
-(Note: You must only respond with the predicted expected sentence and nothing else! Do not include any notes, explanations, or additional text.)
-(Note: Your response will be directly compared for accuracy with the original sentence, so it is crucial that your response is only the translation!)
-### Input:
-"""
+{"answer": "The quick brown fox jumps over the lazy dog."}
+
+Example Input:
+
+El gato 快速的 черный chat прыгать su perro
+
+Reasoning:
+
+'El gato' is Spanish for 'The cat'.
+
+'快速的' is Chinese for 'fast'.
+
+'черный' is Russian for 'black'.
+...
+
+Final Output:
+
+{"answer": "The fast black cat jumps over his dog."}
+
+Important Instructions:
+
+You are allowed provide reasoning and explanations to support your translation process but its is not required.
+
+No two words in the sentence are from the same language.
+
+The final output must be a valid JSON object with the key 'answer'.
+Note: FAILURE TO COMPLY WITH THE EXPECTED ANSWERFORMAT WILL RESULT IN A SCORE OF 0% FOR THIS TASK.
+
+Input:"""
+
+def parse_answer(response_text):
+    try:
+        # Find the part of the response that looks like a JSON object
+        start_index = response_text.find('{')
+        end_index = response_text.rfind('}') + 1
+        
+        # Extract and parse the JSON
+        json_str = response_text[start_index:end_index]
+        parsed_json = json.loads(json_str)
+        
+        # Return the answer value
+        return parsed_json.get("answer", "").strip()
+    except (json.JSONDecodeError, AttributeError) as e:
+        print(f"Error parsing answer: {e}")
+        return ""
 
 # Function to call the Ollama API for predictions
-def get_ollama_prediction(multilingual_sentence):
+def get_ollama_prediction(prompt):
     headers = {"Content-Type": "application/json"}
     
     data = {
-        "model": OLLAMA_MODEL,
-        "prompt": PROMPT + multilingual_sentence,
+        "model": MODEL,
+        "prompt":  prompt,
         "stream": False
     }
 
     try:
-        response = requests.post(f"{OLLAMA_URL}/api/generate", headers=headers, json=data)
+        response = requests.post(f"{OLLAMA_HOST}/api/generate", headers=headers, json=data)
         if response.status_code != 200:
             print(f"Error: {response.status_code} - {response.text}")
         
@@ -59,13 +101,48 @@ def get_ollama_prediction(multilingual_sentence):
 
         # Extract sentences from the Ollama response and remove anything after the first period
         response_text = result.get("response", "")
-        if "." in response_text:
-            cleaned_response = response_text[:response_text.index(".") + 1]
-        else:
-            cleaned_response = response_text
-        return cleaned_response.strip()
+
+        answer = parse_answer(response_text)
+        if answer == "":
+            print('Trying again!')
+            answer = get_ollama_prediction(prompt)
+
+        return answer
     except requests.exceptions.RequestException as e:
         print(f"Error calling Ollama: {e}")
+        return ""
+    
+
+# Function to call the OpenRouter API for predictions
+def get_openrouter_prediction(prompt):
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}"
+    }
+
+    data = {
+        "model": MODEL,
+        "messages": [
+            {"role": "user", "content": prompt}
+        ]
+    }
+    try:
+        response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
+        if response.status_code != 200:
+            print(f"Error: {response.status_code} - {response.text}")
+        
+        response.raise_for_status()
+        result = response.json()
+
+        # Extract sentences from the OpenRouter response
+        response_text = result["choices"][0]["message"]["content"]
+        parse_answer(response_text)
+        if answer == "":
+            print('Trying again!')
+            answer = get_openrouter_prediction(prompt)
+        return answer
+    except requests.exceptions.RequestException as e:
+        print(f"Error calling OpenRouter: {e}")
         return ""
 
 # Load the dataset
@@ -81,8 +158,13 @@ for i, item in enumerate(translations):
     original_sentence = item["original_sentence"].split()
     multilingual_sentence = item["multilingual_sentence"]
 
+    full_prompt = PROMPT + multilingual_sentence 
+
     # Call the Ollama model to get the prediction
-    predicted_sentence = get_ollama_prediction(multilingual_sentence).split()
+    if USE_OLLAMA:
+        predicted_sentence = get_ollama_prediction(full_prompt).split()
+    else:
+        predicted_sentence = get_openrouter_prediction(full_prompt).split()
 
     # Calculate BERTScore
     P, R, F1 = score([" ".join(predicted_sentence)], [" ".join(original_sentence)], lang="en", rescale_with_baseline=True, model_type="microsoft/deberta-xlarge-mnli" )
@@ -98,7 +180,7 @@ for i, item in enumerate(translations):
         "multilingual_sentence": multilingual_sentence,
         "predicted_sentence": " ".join(predicted_sentence),
         "bert_score": round(bert_f1, 2),
-        "model_name": OLLAMA_MODEL
+        "model_name": MODEL
     })
 
 # Calculate the final model score
@@ -106,7 +188,7 @@ final_bert_score = total_bert_score / len(translations)
 print(f'Final BERTscores: {final_bert_score}' )
 
 # Write results to a CSV file
-with open("results/results.csv", "w", newline="", encoding="utf-8") as csvfile:
+with open(f"results/{MODEL}_results.csv", "w", newline="", encoding="utf-8") as csvfile:
     fieldnames = ["original_sentence", "multilingual_sentence", "predicted_sentence", "bert_score", "model_name"]
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
@@ -127,7 +209,7 @@ with open(final_score_file, "a", newline="", encoding="utf-8") as csvfile:
     # Append the final score
     writer.writerow({
         "datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "model_name": OLLAMA_MODEL,
+        "model_name": MODEL,
         "final_bert_score": round(final_bert_score, 2)
     })
 

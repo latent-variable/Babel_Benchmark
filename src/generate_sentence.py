@@ -1,22 +1,13 @@
-import openai
 import os
 import json
 import requests
 import random
 
-THEMES = [
-    "Space Exploration", "Ancient History", "Fantasy", "Science Fiction",
-    "Nature and Wildlife", "Adventure and Exploration", "Mystery and Crime",
-    "Love and Relationships", "Sports and Games", "Cooking and Food",
-    "Music and Art", "Weather and Seasons", "Technology and Gadgets",
-    "Travel and Culture", "Philosophy and Wisdom", "Animals and Pets",
-    "Daily Life", "Dreams and Imagination", "Horror and Suspense", "Comedy and Humor"
-]
-
-# Load your OpenAI API key from environment variables or configuration file
-# Make sure the environment variable 'OPENAI_API_KEY' is set before running the script
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Load your environment variables or configuration file
+MODEL = os.getenv("MODEL", "llama3.2")
+OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY')
 NUM_SENTENCES  = int(os.getenv("NUM_SENTENCES",  10))
+USE_OLLAMA = os.getenv("USE_OLLAMA", "True").lower() in ("true", "1", "yes")
 
 # Define a prompt to instruct the LLM to generate random sentences
 PROMPT = """Generate a random, unique, and diverse English sentence of 5-10 words. The sentence should be grammatically correct, coherent, and meaningful. Ensure that the generated sentences include a variety of themes, structures, and vocabulary to enhance diversity. The output must be a complete sentence, and you must ONLY respond with the sentence. Do NOT provide any additional notes, explanations, or comments.
@@ -36,27 +27,52 @@ PROMPT = """Generate a random, unique, and diverse English sentence of 5-10 word
 Ensure creativity and diversity across all generated sentences. Avoid repetition of common phrases and strive for originality. Stick to English and keep the single sentences between 5 to 10 words.
 """
 def get_random_theme():
-    return random.choice(THEMES)
+    themes = [
+        "Space Exploration", "Ancient History", "Fantasy", "Science Fiction",
+        "Nature and Wildlife", "Adventure and Exploration", "Mystery and Crime",
+        "Love and Relationships", "Sports and Games", "Cooking and Food",
+        "Music and Art", "Weather and Seasons", "Technology and Gadgets",
+        "Travel and Culture", "Philosophy and Wisdom", "Animals and Pets",
+        "Daily Life", "Dreams and Imagination", "Horror and Suspense", "Comedy and Humor"
+    ]
+    return random.choice(themes)
 
-# Function to generate random sentences using OpenAI API
-def generate_openai_sentences():
+# Function to generate random sentences using OpenRouter API
+def generate_openrouter_sentences(num_sentences):
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}"
+    }
+
     sentences = []
-    for _ in range(NUM_SENTENCES):
-         # Add a random THEME
+    for _ in range(num_sentences):
+        # Add a random theme
         random_theme = get_random_theme()
-        salt = f"\nGenerate a random sentence with the theme: {random_theme}"
-        # Make an API call to OpenAI to generate the sentences
-        response = openai.Completion.create(
-            engine=os.getenv("MODEL"),  # Specify the LLM engine to use
-            prompt=PROMPT+salt,  # Provide the instruction prompt to the LLM
-            max_tokens=200,  # Limit the number of tokens in the response
-            stop=None,  # No specific stopping condition for the LLM
-            temperature=0.7  # Controls randomness; higher value makes output more diverse
-        )
+        prompt = f"{os.getenv('PROMPT')}\nGenerate a random sentence with the theme: {random_theme}"
 
-        # Extract and clean the generated sentences from the response
-        sentence = response.choices[0].text.strip()
-        sentences.append({"original_sentence":sentence.strip()})
+        data = {
+            "model":MODEL,
+            "messages": [
+                {"role": "user", "content": prompt}
+            ]
+        }
+
+        try:
+            # Make a POST request to the OpenRouter server
+            response = requests.post(url, headers=headers, json=data)
+            if response.status_code != 200:
+                print(f"Error: {response.status_code} - {response.text}")
+
+            response.raise_for_status()
+            result = response.json()
+
+            # Extract sentences from the OpenRouter response
+            sentence = result["choices"][0]["message"]["content"]
+            print(sentence)
+            sentences.append({"original_sentence": sentence.strip()})
+        except requests.exceptions.RequestException as e:
+            print(f"Error generating sentences with OpenRouter: {e}")
 
     return sentences
 
@@ -73,7 +89,7 @@ def generate_ollama_sentences():
         random_theme = get_random_theme()
         salt = f"\nGenerate a random sentence with the theme: {random_theme}"
         data = {
-            "model": os.getenv("MODEL"),
+            "model": MODEL,
             "prompt": PROMPT+salt,
             "stream": False
         }
@@ -99,7 +115,7 @@ def generate_ollama_sentences():
 if os.getenv("USE_OLLAMA") == "true":
     sentences = generate_ollama_sentences()
 else:
-    sentences = generate_openai_sentences()
+    sentences = generate_openrouter_sentences()
 
 # Save generated sentences to a JSON file
 with open("datasets/random_sentences.json", "w", encoding="utf-8") as f:
