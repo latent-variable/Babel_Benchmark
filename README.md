@@ -54,7 +54,7 @@ The multilingual sentence is presented to an AI model, which is tasked with tran
 
 ### 4. Evaluation Using BERTScore
 
-The reconstructed sentence from the AI model is compared to the original English sentence using **BERTScore**, a state-of-the-art evaluation metric that measures **semantic similarity** between sentences. For this benchmark, we use the **"microsoft/deberta-xlarge-mnli"** model to ensure a high-quality semantic evaluation.
+The reconstructed sentence from the AI model is compared to the original English sentence using [BERTScore](https://github.com/Tiiiger/bert_score), a state-of-the-art evaluation metric that measures **semantic similarity** between sentences. For this benchmark, we use the **"microsoft/deberta-xlarge-mnli"** model to ensure a high-quality semantic evaluation.
 
 BERTScore provides a score out of 100, indicating how well the AI model reconstructed the original meaning:
 
@@ -101,17 +101,6 @@ The Babel Test underscores that **text is AI’s native habitat**. Humans may ar
 - **Python Scripts** for generating base sentences and converting them to multilingual versions.
 - **Google Translate API** to handle the translations.
 - **BERTScore** to evaluate the semantic similarity between the original and reconstructed sentences.
-
----
-
-## Addressing Potential Criticism
-
-Some may argue that the Babel Benchmark is a **toy dataset** and doesn’t reflect real-world applications. However, this same critique could be applied to benchmarks like **ARC_AGI**, which OpenAI solved with the **o3** model. The difference here is that the Babel Benchmark makes the opposite point: **AI can solve a task that no human can accomplish, even theoretically.**
-
-The question is: Can any human solve this test as fast as OpenAI solved ARC_AGI? The answer is no. The challenge of deciphering dozens of languages is simply beyond human capacity.
-
-While there may be other ways to highlight AI's superhuman capabilities in language comprehension, this approach was chosen for its simplicity and clarity in driving the point home. It provides an accessible and straightforward way to demonstrate AI’s dominance in a core domain of human intelligence—language.
-
 
 ---
 
