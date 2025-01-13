@@ -11,3 +11,4 @@ datetime,model_name,final_bert_score
 2025-01-12 19:52:00,google_gemma-2-27b-it,76.04
 2025-01-12 20:07:45,mistralai_mistral-large-2411,73.82
 2025-01-12 20:11:13,human,25.39
+2025-01-12 20:49:00,meta-llama_llama-3.1-405b-instruct,78.14
